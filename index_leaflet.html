@@ -1,0 +1,779 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+	<head>
+		<title>Système alimentaire durable</title>
+
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"	integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="css/L.Control.Locate.min.css" />
+		<link rel="stylesheet" href="css/Control.Geocoder.css" />
+		<link rel="stylesheet" href="css/leaflet-panel-layers.css" />
+		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="css/Control.SimpleMarkers.css" />
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
+
+	
+
+    	<script src="js/leaflet/leaflet.js"></script>
+    	<script src="js/catiline.js"></script>
+		<script src="js/leaflet.shpfile.js"></script>
+		<script src="js/Leaflet.Control.Custom.js"></script>
+		<script src="js/L.Control.Locate.js"></script>
+		<script src="js/Control.Geocoder.js"></script>
+		<script src="js/Control.SimpleMarkers.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.js"></script>
+	
+
+
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+		<script src='https://unpkg.com/@turf/turf/turf.min.js'></script>		
+
+		<script src="data/Alim/Consommation_Test_4326.geojson"></script>		
+		<script src="data/Alim/Distribution_Test_4326.geojson"></script>
+		<script src="data/Alim/Transformation_Test_4326.geojson"></script>
+
+	</head>
+	<body>
+
+		<header>
+
+			<div class="titre_principal">
+				<h1> Geoscan système alimentaire durable en Wallonie </h1>
+			</div>
+
+			<div class="logo1">
+				<img src="images/spw.jpg" alt="" class="logo_spw" />
+			</div>
+
+			<div class="logo2">
+				<img src="images/groupeone.jpg" alt="" class="logo_groupeone" />
+			</div>
+			
+			<div class="inscription">
+				<h1> Inscription </h1>
+			</div>
+
+			<div class="connexion">
+				<h1> Connexion</h1>
+			</div>
+
+		</header>
+
+<!-- 		<div id="navigation">
+
+			<div class="gestion_couche">
+				<h1> Gestionnaire de couches</h1>
+			
+			</div>
+
+
+			<div class="legende">
+				<h1> Legende des couches</h1>
+			</div>
+		</div> -->
+
+		<div id="mapid" class="full-height">
+
+
+
+			<script>
+			var map = new L.map('mapid',{
+				// crs: crs,
+				// continuousWorld: true,
+				// worldCopyJump: false,
+				center : [50.40, 4.82],
+				// center : [185529,128196],	
+				zoom : 12,
+
+				// layers : [grayscale]
+
+			});
+			map.options.maxZoom = 16;
+
+			var streetsurl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+			var streets = new L.tileLayer(
+				streetsurl, 
+				{
+	    			id: 'carte',
+	    			continuousWorld: true, 
+	  				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
+			).addTo(map);
+
+			L.control.scale({
+				metric: true,
+				imperial: false,
+				position: 'bottomleft'
+			}).addTo(map);
+
+			var communes_ctrl = L.layerGroup().addTo(map);
+			var provinces_ctrl = L.layerGroup().addTo(map);
+			var Consommation_ctrl = L.layerGroup().addTo(map);
+			var Distribution_ctrl = L.layerGroup().addTo(map);
+			var Transformation_ctrl = L.layerGroup().addTo(map);
+
+			var stylelayer = {
+				communes: {
+						// fill
+						fillColor: "blue",
+						fillOpacity: 0.01,
+						// limits
+						color: 'grey',
+						weight: 3,
+    					opacity: 1,
+    					// dashArray: '3',
+				},
+				provinces: {
+						// fill
+						fillColor: "none",
+						fillOpacity: 0,
+						// limits
+						color: 'black',
+						weight: 5,
+    		// 			opacity: 1,
+    					// dashArray: '3',				
+				},
+				reset: {
+					color: "red",
+					opacity: 0.4,
+					weight: 1
+				},
+				highlight: {
+					weight: 5,
+					color: '#0D8BE7',
+					opacity:0.1,
+					dashArray: '',
+					fillcolor: "blue",
+					fillOpacity: 0.1
+				},
+				selected: {
+					color: "red",
+					opacity: 0.3,
+					weight: 0.5
+				}
+			}
+
+			var consommationIcon = new L.icon({
+				iconUrl: 'icon/manufacturing.png',
+			    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41],
+			    popupAnchor: [1, -34],
+			    shadowSize: [41, 41]
+			});
+
+			var transformationIcon = new L.icon({
+				iconUrl: 'icon/industries.png',
+			    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41],
+			    popupAnchor: [1, -34],
+			    shadowSize: [41, 41]
+			});
+
+			var distributionIcon = new L.icon({
+				iconUrl: 'icon/food.png',
+			    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41],
+			    popupAnchor: [1, -34],
+			    shadowSize: [41, 41]
+			});
+
+			var greenIcon = new L.Icon({
+			  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+			  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			  iconSize: [25, 41],
+			  iconAnchor: [12, 41],
+			  popupAnchor: [1, -34],
+			  shadowSize: [41, 41]
+			});
+
+			var yellowIcon = new L.Icon({
+			  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+			  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			  iconSize: [25, 41],
+			  iconAnchor: [12, 41],
+			  popupAnchor: [1, -34],
+			  shadowSize: [41, 41]
+			});
+
+						
+
+			var shpfileProduction = new L.Shapefile('data/Alim/Production_3857.zip', {
+				style: function (feature) {
+					if (feature.properties.Categorie === 'grandes cultures non bio') {
+						return { color: 'blue', weight: 2 };
+					} else if (feature.properties.Categorie === 'grandes cultures bio') {
+						return { color: 'red', weight: 2 };
+					} else if (feature.properties.Categorie === 'potagers collectifs') {
+						return { color: 'green', weight: 2 };
+					} else {
+						return { color: 'black', weight: 2 };
+					}
+				},
+				onEachFeature: function(feature, layer) {
+					if (feature.properties) {
+						layer.bindPopup(Object.keys(feature.properties).map(function(k) {
+							return k + ": " + feature.properties[k];
+						}).join("<br />"), {
+							maxHeight: 200
+						});
+					}
+				}
+			});
+
+			shpfileProduction.addTo(map);
+
+			shpfileProduction.once("data:loaded", function() {
+				console.log("shapefile production chargé..");
+			});
+
+
+			var Consommation_geojson = L.geoJSON(geojsonFeature1, {
+
+  					pointToLayer: function(feature, latlgn){
+  						return L.marker (latlgn, {
+  							icon: consommationIcon
+  						});
+  					},
+
+					onEachFeature: function (feature,layer){
+					  	Consommation_ctrl.addLayer(layer);
+						layer.on({
+        					// mouseover: highlightFeature,
+        					// mouseout: resetHighlight,
+        					click: zoomToPointInfo,
+        					// dblclick: bufferPoint,
+
+						});
+		  	
+					  }
+				}).addTo(map);
+
+				var Distribution_geojson = L.geoJSON(geojsonFeature2, {
+
+  					pointToLayer: function(feature, latlgn){
+  						return L.marker (latlgn, {
+  							icon: distributionIcon
+  						});
+  					},
+
+					onEachFeature: function (feature,layer){
+					  	Consommation_ctrl.addLayer(layer);
+						layer.on({
+        					// mouseover: highlightFeature,
+        					// mouseout: resetHighlight,
+        					click: zoomToPointInfo,
+        					// dblclick: bufferPoint,
+
+						});
+		  	
+
+					  }
+				}).addTo(map);
+
+				var Transformation_geojson = L.geoJSON(geojsonFeature3, {
+
+  					pointToLayer: function(feature, latlgn){
+  						return L.marker (latlgn, {
+  							icon: transformationIcon
+  						});
+  					},
+
+					onEachFeature: function (feature,layer){
+					  	Consommation_ctrl.addLayer(layer);
+						layer.on({
+        					// mouseover: highlightFeature,
+        					// mouseout: resetHighlight,
+        					click: zoomToPointInfo,
+        					// dblclick: bufferPoint,
+
+						});
+		  	
+
+					  }
+				}).addTo(map);
+
+
+			function zoomToPointInfo(e) {
+
+  				var latLngs = [e.target.getLatLng()];
+  				var markerBounds = L.latLngBounds(latLngs);
+  				map.fitBounds(markerBounds);
+
+
+				//declaration de l'encart d'affichage lors du clic sur un point  
+
+				var info2 = L.control();
+
+				info2.onAdd = function (map) {
+	    			info2._div = L.DomUtil.create('div', 'info2'); // creation d'une balise <div> sous la classe info2
+	    			info2.update();
+	    			return info2._div;
+				};
+
+				// methode de mise à jour de l'encart basé sur les features properties
+
+				info2.update = function (feature) {
+
+	    			this._div.innerHTML = '<h4> Information des points </h4>'	  
+	    			 +'<button onclick="bufferPoint(e)":>Zone influence</button> <br>' +  (feature ?
+							`
+								Type: ${feature.Type}<br>
+								Categorie: ${feature.Categorie}<br>
+									` : 'Cliquez sur un point');
+				};
+
+				info2.addTo(map);
+
+				var layer = e.target;
+				  info2.update(layer.feature.properties)  
+				  
+
+			};
+
+			function bufferPoint (e) {
+
+				var info4 = L.control();
+
+				info4.onAdd = function (map) {
+	    			info4._div = L.DomUtil.create('div', 'info4'); // creation d'une balise <div> sous la classe info2
+	    			info4.update();
+	    			return info4._div;
+				};
+
+				// methode de mise à jour de l'encart basé sur les features properties
+
+				info4.update = function (feature) {
+	    			this._div.innerHTML = '<h4> Zone influence </h4>' +  (feature ?
+							`
+								Type: ${feature.Type}<br>
+								Categorie: ${feature.Categorie}<br>
+									` : 'Cliquez sur un point');;
+				};
+
+				info4.addTo(map);
+
+				var layer = e.target;
+				  info4.update(layer.feature.properties)  
+
+				var distance = prompt('Buffer distance :');
+				var jsnConsoBuffer = turf.buffer(layer.toGeoJSON(), distance,{units: 'kilometers'});
+				var lyrConsoBuffer = L.geoJson(jsnConsoBuffer, {style:{color:'red'}}).addTo(map);		  
+
+			}
+
+
+			//variable globale où chargé les différents geojson 
+
+			var pointsGlobal = L.geoJSON();
+			pointsGlobal.addData(geojsonFeature1);
+			pointsGlobal.addData(geojsonFeature2);
+			pointsGlobal.addData(geojsonFeature3);
+
+			//chargement des limites administratives
+
+			var provinces_geojson = $.getJSON("data/Adm/Adm_Provinces_4326.geojson",function(provinces){
+  				L.geoJson(provinces, {
+					  style: stylelayer.provinces
+					  ,
+					  onEachFeature: function (feature,layer){
+					  	provinces_ctrl.addLayer(layer)
+
+					  }
+				}).addTo(map);
+			});
+
+			var communes_geojson = $.getJSON("data/Adm/Adm_Communes_4326.geojson",function(communes){
+  				L.geoJson(communes, {
+					  style:  stylelayer.communes
+					  ,	
+					  onEachFeature: function addMyData (feature,layer){
+					  	communes_ctrl.addLayer(layer)
+					  	layer.on({
+        					mouseover: highlightFeature,
+        					mouseout: resetHighlight,
+        					click: zoomToFeature,
+            //dblclick : selectFeature
+						});
+					  }
+				}).addTo(map);
+			});
+
+			//fonctions pour la sélection, le highlight et la création de panneaux d'info pour les communes
+
+			var arrayBounds = [];
+
+			var NameFRES = new Object();
+			$.each(communes_geojson.features, function(feature) {
+				// var name = `${feature.properties.AdMuKey} ${feature.properties.NameFRE} ${feature.properties.NameDUT}`
+				// // placenames.push(name);
+				NameFRES[name] = feature.properties.NameFRE;
+			});
+
+			function highlightFeature(e) {
+    			var layer = e.target;
+    			layer.setStyle(stylelayer.highlight);
+    			info.update(layer.feature.properties);
+			};						
+
+			function resetHighlight(e) {
+				var layer = e.target;
+				layer.setStyle(stylelayer.communes);
+				var feature = e.target.feature;
+				if (checkExistsLayers(feature)) {
+					setStyleLayer(layer, stylelayer.highlight)
+				} else {
+					setStyleLayer(layer, stylelayer.communes)
+				}
+			};
+
+			function checkExistsLayers(feature) {
+				var result = false
+				for (var i = 0; i < featuresSelected.length; i++) {
+					if (featuresSelected[i].NameFRE == feature.properties.NameFRE) {
+						result = true;
+						break;
+					}
+
+				};
+				return result
+			}
+
+			var featuresSelected = [];
+
+			function zoomToFeature(e) {
+				var layer = e.target;
+				var feature = e.target.feature;
+				if (checkExistsLayers(feature)) {
+					removerlayers(feature, setStyleLayer, layer, stylelayer.communes)
+					removeBounds(layer)
+				} else {
+					addLayers(feature, setStyleLayer, layer, stylelayer.highlight)
+					addBounds(layer)
+				}
+				map.fitBounds(arrayBounds);
+				detailsselected.update(featuresSelected)
+			}
+
+			function setStyleLayer(layer, styleSelected) {
+				layer.setStyle(styleSelected)
+			}
+
+			function addLayers(feature, callback) {
+				featuresSelected.push({
+					NameFRE: feature.properties.NameFRE,
+					feature: feature
+				})
+    			callback(arguments[2], arguments[3])
+			}
+
+			function addBounds(layer) {
+				arrayBounds.push(layer.getBounds())
+			}
+
+			var info = L.control({
+    			position: 'bottomleft'
+			});
+
+			info.onAdd = function(map) {
+    			this._div = L.DomUtil.create('div', 'info');
+    			this.update();
+    			return this._div;
+			};
+
+			info.update = function(properties) {
+				this._div.innerHTML =
+					'<h4>Information</h4>' + (properties ?
+						`
+							Nom de la commune: ${properties.NameFRE}<br>
+								` : 'Hover over a state');;
+			};
+
+			info.addTo(map);
+
+			var detailsselected = L.control();
+
+			detailsselected.onAdd = function(map) {
+				this._div = L.DomUtil.create('div', 'info scroler');
+				this.update();
+				return this._div;
+			};
+
+			var detailshow = function() {
+				var result = ''
+				// var total = 0
+				for (var i = 0; i < featuresSelected.length; i++) {
+					var properties = featuresSelected[i].feature.properties
+					result +=
+						`
+
+					Nom: ${properties.NameFRE}<br>
+					<a href="#" onclick=dellayer(${properties.NameFRE})>Delete</a>
+					<hr>`;
+					// total += properties.AdMuKey
+				}
+				return {
+					result: result,
+					// total: total
+				};
+			}
+
+			detailsselected.update = function(arrayselected) {
+				var details = detailshow()
+				this._div.innerHTML = '<h4> Selection des communes <h4>'+ '</b><br>' + details.result;
+				$('#suma', window.parent.document).val(details.total);
+			};
+
+			detailsselected.addTo(map);
+
+			function removerlayers(feature, callback) {
+				featuresSelected = featuresSelected.filter(obj => obj.NameFRE != feature.properties.NameFRE)
+				callback(arguments[2], arguments[3])
+			}
+
+			function removeBounds(layer) {
+				arrayBounds = arrayBounds.filter(bounds => bounds != layer.getBounds())
+			}
+
+			function dellayer(NameFRE) {
+				communes_geojson.eachLayer(function(layer) {
+					if (layer.feature.properties.NameFRE == NameFRE) {
+						selectTypeaheadFeature(layer)
+					}
+				})
+			}
+
+			function selectTypeaheadFeature(layer) {
+				var layer = layer;
+				var feature = layer.feature;
+
+				if (checkExistsLayers(feature)) {
+					removerlayers(feature, setStyleLayer, layer, stylelayer.communes)
+
+					removeBounds(layer)
+
+				} else {
+					addLayers(feature, setStyleLayer, layer, stylelayer.highlight)
+					addBounds(layer)
+				}
+				map.fitBounds(arrayBounds.length != 0 ? arrayBounds : initbounds)
+				detailsselected.update(featuresSelected)
+
+			}
+
+			//création de la boite de controle des couches									
+
+			var baseMaps = {
+					"Carte de base OSM": streets
+			};
+
+			var overlayMaps = {
+	  			"<strong>Limite des communes de la region wallone </strong>": communes_ctrl,
+	  			"<strong>Limite des provinces de la region wallone</strong>": provinces_ctrl,
+	  			"Offre de consommation": Consommation_geojson,
+	  			"Offre de distribution": Distribution_geojson,
+	  			"Offre de transformation": Transformation_geojson,
+			};
+			var control_map = L.control.layers(baseMaps,overlayMaps,{position:'topleft', collapsed: false}).addTo(map);
+
+			//création de la boite de controle de la géolocalisation
+
+			lc = L.control.locate({
+			    strings: {
+			        title: "Géolocalisation de l'utilisateur"
+			    }
+			}).addTo(map);
+
+			// création de la boite de contrôle du geocoding
+
+			L.Control.geocoder({
+				strings: {
+					title: "Trouvez une adresse"
+				}
+			}).addTo(map);
+
+			    // Create the marker controls
+		    // var marker_controls = new L.Control.SimpleMarkers();
+		    // map.addControl(marker_controls);
+
+		    // Create draw polygons
+
+			var editableLayers = new L.FeatureGroup();
+			map.addLayer(editableLayers);
+
+			var drawPluginOptions = {
+			  position: 'topright',
+			  draw: {
+			    polygon: {
+			      allowIntersection: false, // Restricts shapes to simple polygons
+			      drawError: {
+			        color: '#e1e100', // Color the shape will turn when intersects
+			        message: '<strong>Attention<strong> Vous ne pouvez pas dessiner cela!' // Message that will show when intersect
+			      },
+			      shapeOptions: {
+			        color: '#97009c'
+			      }
+			    },
+			    // disable toolbar item by setting it to false
+			    polyline: false,
+			    circle: false, // Turns off this drawing tool
+			    rectangle: false,
+			    marker: true,
+			    },
+			  edit: {
+			    featureGroup: editableLayers, //REQUIRED!!
+			    remove: true
+			  },
+			};
+
+			// Initialise the draw control and pass it the FeatureGroup of editable layers
+			var drawControl = new L.Control.Draw(drawPluginOptions);
+			map.addControl(drawControl);
+
+			// var editableLayers = new L.FeatureGroup();
+			// map.addLayer(editableLayers);
+
+			map.on('draw:created', function(e) {
+				var type = e.layerType,
+				layer = e.layer;
+
+			  if (type === 'marker') {
+			  	var pointCreatedName = prompt("Nommez le point que vous venez de créez");
+				console.log(pointCreatedName);
+				layer.bindPopup(pointCreatedName);
+			  }
+
+			  //Nom de la zone créee
+			  var areaCreatedName1 = prompt("Nommez la zone que vous venez de créer");
+			  var areaCreatedName2 = "<strong> Nom de la zone crée : </strong>"; 
+			  var areaCreatedNameFull = areaCreatedName2 +areaCreatedName1+ "<br>";
+
+			  //résumer des points dans le polygone crée, des types et catégorie des points
+			  var polygon = e.layer.toGeoJSON();
+			  var polygonFeatureCollection = turf.featureCollection([polygon]);
+			  var points = pointsGlobal.toGeoJSON();
+
+			  var countCategorie = summarizePointsInPolygon (polygonFeatureCollection, points,"Categorie");
+			  var countType = summarizePointsInPolygon (polygonFeatureCollection, points,"Type");
+
+
+			  var sumCategorie = SummarizeArray(countCategorie.features[0].properties.CategorieType);
+			  var sumCategorieLength =	sumCategorie[0];
+			  console.log (sumCategorieLength);
+
+
+			  var sumType = SummarizeArray(countType.features[0].properties.TypeType);
+			  var sumTypeLength =	sumType[0];
+			  console.log(sumTypeLength);
+			  var countNumber = sumTypeLength[1];
+			  console.log(countNumber);			  
+
+			  //rajout des infos Categorie et Type dans 2 variables
+
+			  var strPopup = "<br> <strong>Liste et nombre de commerces : </strong>";
+			  for (var i=0; i< sumCategorieLength.length;i++) {
+			  	strPopup += "<br> " +sumCategorie[0][i]+ ": "+sumCategorie[1][i];
+			  };
+
+			  var strPopup2 = "<br> <strong> Nombre total sur la zone : </strong>";
+			  for (var i=0; i< sumTypeLength.length;i++) {
+			  	strPopup2 += "<br> " +sumType[0][i]+ ": "+sumType[1][i];
+			  };
+
+			  //calcul de l'aire de la zone créee
+
+			  var areaPolygon =  turf.area(layer.toGeoJSON());
+			  var areaPolygonKm = Number(areaPolygon*0.000001);
+			  var n = areaPolygonKm.toFixed(2);
+			  var areaWritting ="<br> <strong>Aire de la zone :</strong> " +n+ " Km<sup>2</sup>";
+
+			  //nombre de commerce par km2
+
+			  var areaConso = n/countNumber;
+			  var n2 = areaConso.toFixed(2);
+			  var areaWritting2 ="<br> <strong>1 commerce par :</strong> " +n2+ " Km<sup>2</sup>";
+
+
+			  //liste finale des informations reprise dans l'encart
+
+			  var PopuFinal = areaCreatedNameFull + strPopup + "<br>" +strPopup2 + areaWritting +areaWritting2;
+
+			  editableLayers.addLayer(layer);
+
+
+
+			  //création d'une zone d'info pour la création du polygone
+
+
+			  var info3 = L.control();
+
+				info3.onAdd = function (map) {
+	    			info3._div = L.DomUtil.create('div', 'info3'); // create a div with a class "info"
+	    			info3.update();
+	    			return info3._div;
+				};
+
+				// method that we will use to update the control based on feature properties passed
+				info3.update = function (feature) {
+	    			this._div.innerHTML = PopuFinal + '<br> <button onclick="surfaceCalculation()":>Indicateur #01</button>';
+				};
+
+				info3.addTo(map);
+
+			});
+
+
+			function summarizePointsInPolygon (polygon,points,prop) {
+				collectPoints = turf.collect(polygon, points, prop,prop+"Type");
+				return collectPoints;
+			};
+
+			function SummarizeArray (ar) {
+				var arUnique = [];
+				var arCount = [];
+				for (var i = 0; i < ar.length; i++) {
+					var idx = arUnique.indexOf(ar[i]);
+					if (idx < 0) {
+						arUnique.push(ar[i]);
+						arCount.push(1);
+					} else {
+						arCount [idx] = arCount[idx]+1;
+					}
+				}
+				return[arUnique,arCount];
+			};
+
+		
+			</script>
+		</div>
+
+<!-- 		<div id="outils">
+
+				<div class="outils_01">
+					<h1> Outil de création de rapport</h1>
+				</div>
+
+				<div class="outils_02">
+					<h1> Outil de sélection</h1>
+				</div>
+			
+				<div class="outils_03">
+					<h1> Indice alimentaire</h1>
+				</div>
+
+				<div class="outils_04">
+					<h1> Outil de mesures</h1>
+				</div>			
+
+		</div>		 -->
+
+		<div class="pied_principal">
+			<h1> Pied de page</h1>
+		</div>
+
+	</body>
+</html>
