@@ -1,0 +1,22 @@
+var geojsonFeature2 = {
+"type": "FeatureCollection",
+"name": "Distribution_Test_4326",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": 1, "Type": "Distribution", "Categorie": "autres grossistes alimentaires" }, "geometry": { "type": "Point", "coordinates": [ 4.887752786541013, 50.43991370069368 ] } },
+{ "type": "Feature", "properties": { "id": 2, "Type": "Distribution", "Categorie": "autres grossistes alimentaires" }, "geometry": { "type": "Point", "coordinates": [ 4.822693050042635, 50.467991494899096 ] } },
+{ "type": "Feature", "properties": { "id": 3, "Type": "Distribution", "Categorie": "autres grossistes alimentaires" }, "geometry": { "type": "Point", "coordinates": [ 4.879858508890581, 50.410431427960212 ] } },
+{ "type": "Feature", "properties": { "id": 4, "Type": "Distribution", "Categorie": "autres grossistes alimentaires" }, "geometry": { "type": "Point", "coordinates": [ 4.873986744179657, 50.46488182430344 ] } },
+{ "type": "Feature", "properties": { "id": 5, "Type": "Distribution", "Categorie": "autres grossistes alimentaires" }, "geometry": { "type": "Point", "coordinates": [ 4.770902593092649, 50.450621866063941 ] } },
+{ "type": "Feature", "properties": { "id": 6, "Type": "Distribution", "Categorie": "distributeur bio" }, "geometry": { "type": "Point", "coordinates": [ 4.865651351238482, 50.462993392027087 ] } },
+{ "type": "Feature", "properties": { "id": 7, "Type": "Distribution", "Categorie": "distributeur bio" }, "geometry": { "type": "Point", "coordinates": [ 4.861442011033323, 50.465003024524286 ] } },
+{ "type": "Feature", "properties": { "id": 8, "Type": "Distribution", "Categorie": "distributeur bio" }, "geometry": { "type": "Point", "coordinates": [ 4.888802722366838, 50.449761179651624 ] } },
+{ "type": "Feature", "properties": { "id": 9, "Type": "Distribution", "Categorie": "distributeur bio" }, "geometry": { "type": "Point", "coordinates": [ 4.8209271115587, 50.45997878315768 ] } },
+{ "type": "Feature", "properties": { "id": 10, "Type": "Distribution", "Categorie": "distributeur bio" }, "geometry": { "type": "Point", "coordinates": [ 4.863283597373084, 50.42328564992328 ] } },
+{ "type": "Feature", "properties": { "id": 11, "Type": "Distribution", "Categorie": "distributeur mobilite douce" }, "geometry": { "type": "Point", "coordinates": [ 4.882288623964516, 50.473325403614837 ] } },
+{ "type": "Feature", "properties": { "id": 12, "Type": "Distribution", "Categorie": "distributeur mobilite douce" }, "geometry": { "type": "Point", "coordinates": [ 4.866370126985249, 50.454050062975682 ] } },
+{ "type": "Feature", "properties": { "id": 14, "Type": "Distribution", "Categorie": "distributeur mobilite douce" }, "geometry": { "type": "Point", "coordinates": [ 4.868109010190223, 50.450423636529365 ] } },
+{ "type": "Feature", "properties": { "id": 15, "Type": "Distribution", "Categorie": "distributeur mobilite douce" }, "geometry": { "type": "Point", "coordinates": [ 4.844852120810117, 50.457969521754187 ] } },
+{ "type": "Feature", "properties": { "id": 13, "Type": "Distribution", "Categorie": "distributeur mobilite douce" }, "geometry": { "type": "Point", "coordinates": [ 4.903551788296224, 50.443508638077837 ] } }
+]
+}
