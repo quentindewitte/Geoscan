@@ -1,0 +1,2140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+	<head>
+		<title>Système alimentaire durable</title>
+
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"	integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="css/L.Control.Locate.min.css" />
+		<link rel="stylesheet" href="css/Control.Geocoder.css" />
+		<link rel="stylesheet" href="css/leaflet-panel-layers.css" />
+		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="css/Control.SimpleMarkers.css" />
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
+		<link rel="stylesheet" href="css/leaflet-panel-layers.css" />
+
+		<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">	 -->
+
+    	<script src="js/leaflet/leaflet.js"></script>
+    	<script src="js/catiline.js"></script>
+		<script src="js/leaflet.shpfile.js"></script>
+		<script src="js/Leaflet.Control.Custom.js"></script>
+		<script src="js/L.Control.Locate.js"></script>
+		<script src="js/Control.Geocoder.js"></script>
+		<script src="js/Control.SimpleMarkers.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.js"></script>
+		<script src="js/leaflet-panel-layers.js"></script>
+
+
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+		<script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
+
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js'></script>
+
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+		
+
+		<script src="data/Alim/Database_points_alim.geojson"></script>
+		<script src="data/Adm/secteur_stat_centroids_002.geojson"></script>
+
+
+
+	</head>
+	<body>
+
+		<header>
+
+			<div class="titre_principal">
+				<h1> Geoscan système alimentaire durable en Wallonie </h1>
+			</div>
+
+			<div class="logo1">
+				<img src="images/spw.jpg" alt="" class="logo_spw" />
+			</div>
+
+			<div class="logo2">
+				<img src="images/groupeone.jpg" alt="" class="logo_groupeone" />
+			</div>
+			
+			<div class="inscription">
+				<h1> Inscription </h1>
+			</div>
+
+			<div class="connexion">
+				<h1> Connexion</h1>
+			</div>
+
+		</header>
+
+<!-- 		<div id="navigation">
+
+			<div class="gestion_couche">
+				<h1> Gestionnaire de couches</h1>
+			
+			</div>
+
+
+			<div class="legende">
+				<h1> Legende des couches</h1>
+			</div>
+		</div> -->
+
+		<div id="mapid" class="full-height">
+
+			<script>
+			var map = new L.map('mapid',{
+				// crs: crs,
+				// continuousWorld: true,
+				// worldCopyJump: false,
+				center : [50.65, 4.52],
+				// center : [185529,128196],	
+				zoom : 12,
+
+				// layers : [grayscale]
+
+			});
+			map.options.maxZoom = 15;
+
+			var streetsurl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+			var streets = new L.tileLayer(
+				streetsurl, 
+				{
+	    			id: 'carte',
+	    			continuousWorld: true, 
+	  				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
+			).addTo(map);
+
+			L.control.scale({
+				metric: true,
+				imperial: false,
+				position: 'bottomleft'
+			}).addTo(map);
+
+			var communes_ctrl = L.layerGroup().addTo(map);
+			var provinces_ctrl = L.layerGroup().addTo(map);
+			var sitesRepertoriesCtrl = L.layerGroup().addTo(map);
+
+
+			var stylelayer = {
+				communes: {
+						// fill
+						fillColor: "blue",
+						fillOpacity: 0.01,
+						// limits
+						color: 'grey',
+						weight: 3,
+    					opacity: 1,
+    					// dashArray: '3',
+				},
+				provinces: {
+						// fill
+						fillColor: "none",
+						fillOpacity: 0,
+						// limits
+						color: 'black',
+						weight: 5,
+    		// 			opacity: 1,
+    					// dashArray: '3',				
+				},
+				reset: {
+					color: "red",
+					opacity: 0.4,
+					weight: 1
+				},
+				highlight: {
+					weight: 5,
+					color: '#0D8BE7',
+					opacity:0.1,
+					dashArray: '',
+					fillcolor: "blue",
+					fillOpacity: 0.1
+				},
+				selected: {
+					color: "red",
+					opacity: 0.3,
+					weight: 0.5
+				},
+				secteurstat: {
+					color: "none",
+					opacity: 0,
+					fillColor: "none",
+					fillOpacity: 0,
+				}
+			}
+
+			var consommationIcon = new L.icon({
+				iconUrl: 'icon/manufacturing.png',
+			    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41],
+			    popupAnchor: [1, -34],
+			    shadowSize: [41, 41]
+			});
+
+			var transformationIcon = new L.icon({
+				iconUrl: 'icon/industries.png',
+			    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41],
+			    popupAnchor: [1, -34],
+			    shadowSize: [41, 41]
+			});
+
+			var distributionIcon = new L.icon({
+				iconUrl: 'icon/food.png',
+			    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41],
+			    popupAnchor: [1, -34],
+			    shadowSize: [41, 41]
+			});
+
+			var greenIcon = new L.Icon({
+			  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+			  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			  iconSize: [25, 41],
+			  iconAnchor: [12, 41],
+			  popupAnchor: [1, -34],
+			  shadowSize: [41, 41]
+			});
+
+			var yellowIcon = new L.Icon({
+			  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+			  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			  iconSize: [25, 41],
+			  iconAnchor: [12, 41],
+			  popupAnchor: [1, -34],
+			  shadowSize: [41, 41]
+			});
+
+						
+				var dataReal = L.geoJSON(geojsonFeature5, {
+
+					pointToLayer: function(feature, latlgn){
+						return L.marker (latlgn, {
+							icon: greenIcon
+						});
+					},
+
+					onEachFeature: function (feature,layer){
+						sitesRepertoriesCtrl.addLayer(layer);
+					layer.on({
+						// mouseover: highlightFeature,
+						// mouseout: resetHighlight,
+						click: zoomToPointInfo,
+						// dblclick: bufferPoint,
+
+					});
+
+
+					}
+					}).addTo(map);
+
+
+			function zoomToPointInfo(e) {
+
+				var latLngs = [e.target.getLatLng()];
+  				var markerBounds = L.latLngBounds(latLngs);
+				map.fitBounds(markerBounds);
+
+				var layer = e.target;
+				var layerPoints = layer.toGeoJSON();
+
+				//variables des différents paramêtres 
+				var infoNom = layerPoints.properties.Nom;
+				var infoType = layerPoints.properties.Type;
+				var infoAdresse = layerPoints.properties.Adresse;
+				var infoCP = layerPoints.properties.CP;
+				var infoLocalite = layerPoints.properties.Localite;
+
+				//declaration de l'encart d'affichage lors du clic sur un point  
+
+				var info2 = L.control();
+
+				info2.onAdd = function (map) {
+					if(L.DomUtil.get("info2_div")){
+						info2._div = L.DomUtil.get("info2_div"); // Utilisation de la div déjà existante
+					} else {
+	    			    info2._div = L.DomUtil.create('div', 'info2'); // creation d'une balise <div> sous la classe info2
+					}
+					info2.update();
+	    			return info2._div;
+				};
+
+				// methode de mise à jour de l'encart basé sur les features properties
+
+				info2.update = function (feature) {
+
+					//création du bouton "zone d'influence"
+
+					let btnZoneInfluencePoint = document.createElement('button');
+					btnZoneInfluencePoint.id = "btnZoneInfluencePoint";
+					btnZoneInfluencePoint.innerText = "Zone d'influence";
+					btnZoneInfluencePoint.onclick = function() { bufferPoint2(layerPoints); };
+
+					//création du bouton "fermeture"
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "btn-close";
+					buttonCloseClickable.onclick = function(e) { encartClose(layerPoints); };
+
+					this._div.id = "info2_div";
+					this._div.innerHTML = ` 
+							<h4> Site : ${infoNom} </h4>
+							<br>
+							<button type="button" class="collapsible">Information générale</button>
+							<div class="content">
+								<strong> Nom: </strong>${infoNom} <br> 
+								<strong> Type de magasins : </strong>${infoType} <br>
+								<strong> adresse: </strong>${infoAdresse} <br>
+								${infoCP}, ${infoLocalite}
+							</div>
+							<br>
+								`
+					this._div.appendChild(btnZoneInfluencePoint);
+					this._div.appendChild(buttonCloseClickable);
+
+					//collapse infos
+					var coll = document.getElementsByClassName("collapsible");
+					var i;
+
+					for (i = 0; i < coll.length; i++) {
+					coll[i].addEventListener("click", function() {
+						this.classList.toggle("active");
+						var content = this.nextElementSibling;
+						if (content.style.display === "block") {
+						content.style.display = "none";
+						} else {
+						content.style.display = "block";
+						}
+					});
+					}
+				};
+
+				info2.addTo(map);
+
+				  info2.update(layer.feature.properties)  
+				  
+			};
+
+			function encartClose (layer) {
+
+				var closeEncart = document.getElementById("info2_div");
+				console.log(closeEncart);
+				closeEncart.remove();			
+
+			}	
+
+			//variable globale où charger les différents geojson 
+
+			var pointsGlobal = L.geoJSON();
+			pointsGlobal.addData(geojsonFeature5);
+
+			//chargement des limites administratives
+
+			var provinces_geojson = $.getJSON("data/Adm/Adm_Provinces_4326.geojson",function(provinces){
+  				L.geoJson(provinces, {
+					  style: stylelayer.provinces
+					  ,
+					  onEachFeature: function (feature,layer){
+						provinces_ctrl.addLayer(layer)
+   					  }
+				}).addTo(map);
+			});
+
+			var communes_geojson = $.getJSON("data/Adm/Adm_Communes_4326.geojson",function(communes){
+  				L.geoJson(communes, {
+					  style:  stylelayer.communes
+					  ,	
+					  onEachFeature: function addMyData (feature,layer){
+					  	communes_ctrl.addLayer(layer)
+					  	layer.on({
+        					mouseover: highlightFeature,
+        					mouseout: resetHighlight,
+							click: zoomToFeature,
+							contextmenu: rightClick,
+            				//dblclick : selectFeature
+						});
+												
+					  }
+				}).addTo(map);
+			});
+
+				// upload without display of secteur stat (points)
+
+			var secteurStat_geojson = L.geoJSON(geojsonFeature4);
+
+			// var parcelles_Agricoles = L.geoJSON(geojsonFeature5);
+			// console.log(parcelles_Agricoles);
+
+				//test right click pour communes
+
+			//Right click on the map activated
+			function rightClick (e) {
+				var layer = e.target;
+				var feature = e.target.feature;
+				var layerArea = layer.toGeoJSON();
+
+
+				// données de base type/catégorie de la commune
+				// declaration de l'encart d'affichage lors du clic sur un point  
+
+				var infoRightClick = L.control({
+					position: 'bottomleft'
+				});
+
+				infoRightClick.onAdd = function (map) {
+					if(L.DomUtil.get("infoRightClick_div")){
+						infoRightClick._div = L.DomUtil.get("infoRightClick_div"); // Utilisation de la div déjà existante
+					} else {
+	    			    infoRightClick._div = L.DomUtil.create('div', 'infoRightClick'); // creation d'une balise <div> sous la classe info2
+					}
+					infoRightClick.update();
+	    			return infoRightClick._div;
+				};
+
+				// methode de mise à jour de l'encart basé sur les features properties
+
+				infoRightClick.update = function (feature) {
+
+					//bouton zone d'influence
+
+					let btnCliczoneInflRC = document.createElement('button');
+					btnCliczoneInflRC.id = "btnCliczoneInflRC";
+					btnCliczoneInflRC.innerText = "Zone d'influence";
+					btnCliczoneInflRC.title = "information: le bouton permet de calculer la liste de l'ensemble des magasins sur la zone";
+					btnCliczoneInflRC.onclick = function() { turfCollect5RC(layerArea); };
+
+					//bouton indicateur 1
+
+					let btnClicInd1RC = document.createElement('button');
+					btnClicInd1RC.id = "btnClicInd1RC";
+					btnClicInd1RC.innerText = "Indicateur 001";
+					btnClicInd1RC.title = "à faire";
+					btnClicInd1RC.onclick = function() { productionAgriHabRC(layerArea); };
+
+					// bouton indicateur 2
+
+					let btnClicInd2RC = document.createElement('button');
+					btnClicInd2RC.id = "btnClicInd2RC";
+					btnClicInd2RC.innerText = "Indicateur 002";
+					btnClicInd2RC.title = "Indicateur du nombre total de sites sur la commune et du nombre d'habitant par site";
+					btnClicInd2RC.onclick = function() { densiteCommRC(layerArea); };
+
+
+					//bouton graphique utilisation du sol
+
+					let btnClicGraphRC = document.createElement('button');
+					btnClicGraphRC.id = "btnClicGraphRC";
+					btnClicGraphRC.innerText = "Graphique utilisation du sol";
+					btnClicGraphRC.title = "information: le graphique reprend la part d'utilisation du sol par les terres agricoles et par les terres en friche";
+					btnClicGraphRC.onclick = function() { pieChartRC(layerArea); };
+
+					//bouton graphique ressource économique
+
+					let btnClicGraph2RC = document.createElement('button');
+					btnClicGraph2RC.id = "btnClicGraph2RC";
+					btnClicGraph2RC.innerText = "Graphique revenu moyen";
+					btnClicGraph2RC.title = "information: le graphique reprend le revenu moyen par habitant de la commune en comparaison du revenu moyen pour la province et pour la région";
+					btnClicGraph2RC.onclick = function() { barChartRC(layerArea); };
+
+
+					// bouton de fermeture
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "btn-close";
+					buttonCloseClickable.onclick = function() { encartCloseRC(layerArea);};
+
+					this._div.id = "infoRightClick";
+
+
+	    			this._div.innerHTML = (feature ?
+							`
+								<h4>Commune de ${feature.NameFRE} </h4>
+								<br>
+								<button type="button" class="collapsible">Information générale</button>
+								<div class="content">
+									<strong> Province :</strong> ${feature.Provinces}<br>
+									<strong> Superficie communale:</strong> ${feature.Surface2} Km <sup>2</sup><br>
+									<strong> Nombre d'habitans:</strong> ${feature.Population} habitants<br>
+									<strong> Densité de population:</strong> ${feature.Densite} habitants par Km <sup>2</sup><br>
+								</div>	
+								<br>
+								<button type="button" class="collapsible">Information économique</button>
+								<div class="content">
+									<strong> Le revenu moyen par habitant :</strong> ${feature.RevenuMoyenHabitant} euros<br>
+									<strong> Le prix moyen au mètres carré :</strong> ${feature.PrixMoyenm2} euros/m<sup>2</sup><br>
+								</div>	
+								<br>
+								<button type="button" class="collapsible">Information système alimentaire</button>
+								<div class="content">
+									<strong> Gal présent dans la commune :</strong> ${feature.Gal}<br>
+									<strong> Nombre d'exploitation agricole:</strong> ${feature.NombreExploitations}<br>
+									<strong> Pourcentage de terre arable:</strong> ${feature.PartTerresArables} %<br>
+								</div>	
+								<br>
+
+									` : 'Cliquez sur un point');
+					this._div.appendChild(btnClicGraphRC);
+					this._div.appendChild(btnClicGraph2RC);
+					this._div.appendChild(btnClicInd1RC);
+					this._div.appendChild(btnClicInd2RC);
+					this._div.appendChild(btnCliczoneInflRC);
+					this._div.appendChild(buttonCloseClickable);
+					// this._div.appendChild(info5_divHeader);
+
+					var coll = document.getElementsByClassName("collapsible");
+					var i;
+
+					for (i = 0; i < coll.length; i++) {
+					coll[i].addEventListener("click", function() {
+						this.classList.toggle("active");
+						var content = this.nextElementSibling;
+						if (content.style.display === "block") {
+						content.style.display = "none";
+						} else {
+						content.style.display = "block";
+						}
+					});
+					}
+
+				};
+	
+				infoRightClick.addTo(map);
+
+				infoRightClick.update(layer.feature.properties)  				
+			};
+
+			function encartCloseRC (layer) {
+
+				var closeEncart = document.getElementById("infoRightClick");
+				console.log(closeEncart);
+				closeEncart.remove();			
+
+			};	
+
+			function pieChartRC (feature) {
+
+				var info10 = L.control({
+					position: 'bottomleft'
+				});
+
+				info10.onAdd = function (map) {
+						if(L.DomUtil.get("info10_div")){
+							info10._div = L.DomUtil.get("info10_div"); // Utilisation de la div déjà existante
+						} else {
+							info10._div = L.DomUtil.create('div', 'info10'); // creation d'une balise <div> sous la classe info2
+						}							
+						info10.update();
+						return info10._div;
+					};
+				// methode utilisée pour updater l'encart controle basé sur les features properties
+
+				info10.update = function (feature) {
+
+					//bouton de fermeture
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "close";
+					buttonCloseClickable.onclick = function(){ encartHide7(info10); };
+
+					// création d'un élément canvas
+
+					let chartCanvas = document.createElement('canvas');
+					chartCanvas.id = "chartTest";
+					chartCanvas.style.cssText = 'width:350px;height:350px';
+
+					//dans l'encart
+
+					this._div.innerHTML = `	`;
+					this._div.id = "info10_div";
+					this._div.appendChild(buttonCloseClickable);
+					this._div.appendChild(chartCanvas);
+				};
+
+				info10.addTo(map);
+
+				//création des variables du pie chart
+
+				var surfaceAgricole = feature.properties.SurfAgri2;
+				console.log(surfaceAgricole);
+
+				var surfaceFriche = feature.properties.SurfFriche2;
+				console.log(surfaceFriche);
+
+				var surfaceCommune = feature.properties.Surface2;
+				console.log(surfaceCommune);
+
+				var surfaceCommuneResiduel = surfaceCommune - surfaceFriche - surfaceAgricole
+				console.log(surfaceCommuneResiduel);
+
+				let label = ['terres agricoles', 'terres en friche', 'Autres'];
+				let data = [surfaceAgricole,surfaceFriche,surfaceCommuneResiduel]
+
+				let color = ['#8A2BE2','#36CAAB','#49A9EA'];
+
+				let myChart = document.getElementById("chartTest");
+
+				let chart1 = new Chart(myChart, {
+					type: 'pie',
+					data: {
+						labels: label,
+						datasets: [{
+							data: data,
+							backgroundColor: color
+						}],
+					},
+					options: {
+						title: {
+							text: "Graphique d'utilisation du sol (en km2)",
+							display: 'true',
+						},
+					},
+				});
+	
+			};
+			
+			function encartHide7 (layer) {
+
+				var removeEncart = document.getElementById("info10_div");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+			};
+
+			function barChartRC (feature) {
+
+				var info9 = L.control({
+					position: 'bottomleft'
+				});
+
+				info9.onAdd = function (map) {
+						if(L.DomUtil.get("info9_div")){
+							info9._div = L.DomUtil.get("info9_div"); // Utilisation de la div déjà existante
+						} else {
+							info9._div = L.DomUtil.create('div', 'info9'); // creation d'une balise <div> sous la classe info2
+						}							
+						info9.update();
+						return info9._div;
+					};
+
+				// methode utilisée pour updater l'encart controle basé sur les features properties
+
+				info9.update = function (feature) {
+
+					//bouton de fermeture
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "close";
+					buttonCloseClickable.onclick = function(){ encartHide6(info9); };
+
+					// création d'un élément canvas
+
+					let chartCanvas2 = document.createElement('canvas');
+					chartCanvas2.id = "chartTest2";
+					chartCanvas2.style.cssText = 'width:350px;height:350px';
+
+					//dans l'encart
+
+					this._div.innerHTML = `	`;
+					this._div.id = "info9_div";
+					this._div.appendChild(buttonCloseClickable);
+					this._div.appendChild(chartCanvas2);
+				};
+
+				info9.addTo(map);
+
+				//création des variables du bar chart
+
+				var revenuCommune = feature.properties.RevenuMoyenHabitant;
+				console.log(revenuCommune);
+
+				var revenuProvince = feature.properties.RevenuProvince;
+				console.log(revenuProvince);
+
+				var revenuWallon = feature.properties.RevenuWallon;
+				console.log(revenuWallon);				
+
+				let label2 = ['Commune', 'Province', 'Region Wallone'];
+				let data2 = [revenuCommune,revenuProvince,revenuWallon];
+				let legend2 = ['Commune', 'Province', 'Region Wallone']
+
+				let color2 = ['#B370CF','#34495E','#49A9EA'];
+
+				let myChart2 = document.getElementById("chartTest2");
+
+				let chart2 = new Chart(myChart2, {
+					type: 'bar',
+					data: {
+						labels: label2,
+						datasets: [{
+							data: data2,
+							backgroundColor: color2
+						}],
+					},
+					options: {
+						title: {
+							text: "Graphique du revenu moyen par habitant (en euros)",
+							display: 'true',
+						},
+						legend: {
+							display : false,
+						}
+					},
+				});
+
+				};
+
+			function encartHide6 (layer) {
+
+				var removeEncart = document.getElementById("info9_div");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+			};
+			function productionAgriHabRC (layer) {
+
+				// Hectares de terres arables sur la commune et %
+
+				var hectare = layer.properties.SurfTerresArables;
+				var hectare2 = hectare.toFixed(2);
+				var hectarePourcentage = layer.properties.PartTerresArables;
+				var hectarePourcentage2 = hectarePourcentage.toFixed(2);
+
+				// information sur le nombre d'haitants et sur la commune
+
+				var strPopup = layer.properties.Population
+				var communes = layer.properties.Nom
+				var hectareHabitant = hectare2/strPopup
+				var hectareHabitant2 = hectareHabitant.toFixed(2);
+
+				//liste finale des informations reprise dans l'encart
+				var strPopup2 = `<strong> Nombre d'hectares de terres arables: </strong>${hectare2}`
+				var strPopup3 = `<strong> Pourcentage de terres arables: </strong>${hectarePourcentage2} %`
+				var strPopup4 = `Dans la commune de ${communes}, <br> nous retrouvons un total de <strong>${hectare2}</strong> hectares pour <strong> ${strPopup} </strong>habitants`
+				var strPopup5 = `<strong>Nombre d'hectare par habitant</strong> ${hectareHabitant2} hectares`
+
+				var PopuFinal = strPopup2 + '<br>' + strPopup3 + '<br>' + strPopup4 + '<br>' + strPopup5;
+
+					//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+				//récupération de l'encart inof2		
+				var encartBase = L.DomUtil.get("infoRightClick");
+
+				//bouton pour cacher
+				let buttonHide = document.createElement('button');
+				buttonHide.id = "buttonHide";
+				buttonHide.innerText = "Effacer";
+				buttonHide.onclick = function() { encartHide8(layer); };
+
+				var bufferPointEncart = document.createElement('div');
+				bufferPointEncart.id = "bufferPointEncartRC";
+				bufferPointEncart.innerHTML = `<h4> Production agricole  </h4>	  
+							${PopuFinal}`;
+
+				encartBase.append(bufferPointEncart);
+				bufferPointEncart.append(buttonHide);
+
+			};
+
+			function densiteCommRC (layer) {
+
+				//données pour le turf.collect
+
+				// var polygon = layer.toGeoJSON();
+				var polygonFeatureCollection = turf.featureCollection([layer]);
+				var points = pointsGlobal.toGeoJSON();
+
+				//utilisation des fonctions summarize pour les countTurf (nombre total de magasins sur la zone)
+
+				var countNombre = summarizePointsInPolygon (polygonFeatureCollection, points,"countTurf");
+
+				var sumNombre = SummarizeArray(countNombre.features[0].properties.countTurfType);
+				var sumNombreLength = sumNombre[1];
+
+				//rajout des infos Categorie et Type dans 2 variables
+
+				var strPopup =`<strong>Nombre de magasins trouvés sur la zone:</strong> ${sumNombreLength}`
+
+				// rajout des infos sur la population de la commune
+
+				var commune = layer.properties.Nom
+				var strPopup2 = layer.properties.Population;
+				console.log(strPopup2);
+				var strPopup3 = strPopup2/sumNombreLength;
+				var strPopup4 = strPopup3.toFixed(0);
+				console.log(strPopup4);
+				var strPopup5 = `<strong>Dans la commune de ${commune}, nous retrouvons un magasin pour </strong> ${strPopup4} habitants`
+
+				//liste finale des informations reprise dans l'encart
+
+				var PopuFinal = strPopup + '<br>' + strPopup5 ;
+
+
+				//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+					
+				//récupération de l'encart inof2		
+				var encartBase = L.DomUtil.get("infoRightClick");
+
+				//bouton pour cacher
+				let buttonHide = document.createElement('button');
+				buttonHide.id = "buttonHide";
+				buttonHide.innerText = "Effacer";
+				buttonHide.onclick = function() { encartHide4(layer); };
+
+				var bufferPointEncart = document.createElement('div');
+				bufferPointEncart.id = "bufferPointEncartRC";
+				bufferPointEncart.innerHTML = `<h4> Densité du nombre de sites  </h4>	  
+						${PopuFinal}`;
+
+				encartBase.append(bufferPointEncart);
+				bufferPointEncart.append(buttonHide);
+
+			};
+			function turfCollect5RC (layer) {
+
+				//données pour le turf.collect
+
+				// var polygon = layer.toGeoJSON();
+				var polygonFeatureCollection = turf.featureCollection([layer]);
+				var points = pointsGlobal.toGeoJSON();
+
+				//utilisation des fonctions summarize pour les types et catégories
+
+				var countCategorie = summarizePointsInPolygon (polygonFeatureCollection, points,"Categorie");
+				var countType = summarizePointsInPolygon (polygonFeatureCollection, points,"Type");
+
+
+				var sumCategorie = SummarizeArray(countCategorie.features[0].properties.CategorieType);
+				var sumCategorieLength = sumCategorie[0];
+
+				var sumType = SummarizeArray(countType.features[0].properties.TypeType);
+				var sumTypeLength =	sumType[0];
+
+
+				//rajout des infos Categorie et Type dans 2 variables
+
+				var strPopup = "<br> <strong>Résumé de la liste des commerces : </strong>";
+				for (var i=0; i< sumCategorieLength.length;i++) {
+				strPopup += "<br> " +sumCategorie[0][i]+ ": "+sumCategorie[1][i];
+				};
+
+				var strPopup2 = "<br> <strong> Nombre total sur la zone répertorié par cargorie : </strong>";
+				for (var i=0; i< sumTypeLength.length;i++) {
+				strPopup2 += "<br> " +sumType[0][i]+ ": "+sumType[1][i];
+				};
+
+
+				//liste finale des informations reprise dans l'encart
+
+				var PopuFinal = strPopup + "<br>" +strPopup2 ;
+
+
+						//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+				//récupération de l'encart inof2		
+				var encartBase = L.DomUtil.get("infoRightClick");
+
+				//bouton pour cacher
+				let buttonHide = document.createElement('button');
+				buttonHide.id = "buttonHide";
+				buttonHide.innerText = "Effacer";
+				buttonHide.onclick = function() { encartHide8(layer); };
+
+				var bufferPointEncart = document.createElement('div');
+				bufferPointEncart.id = "bufferPointEncartRC";
+				bufferPointEncart.innerHTML = `<h4> zone influente </h4>	  
+							${PopuFinal}`;
+
+				encartBase.append(bufferPointEncart);
+				bufferPointEncart.append(buttonHide);
+			};
+			
+			function encartHide8 (layer) {
+
+				var removeEncart = document.getElementById("bufferPointEncartRC");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+			};	
+							
+			//fonctions pour la sélection, le highlight et la création de panneaux d'info pour les communes
+
+			var arrayBounds = [];
+
+			var NameFRES = new Object();
+			$.each(communes_geojson.features, function(feature) {
+				// var name = `${feature.properties.AdMuKey} ${feature.properties.NameFRE} ${feature.properties.NameDUT}`
+				// // placenames.push(name);
+				NameFRES[name] = feature.properties.NameFRE;
+			});
+
+		
+			function highlightFeature(e) {
+    			var layer = e.target;
+    			layer.setStyle(stylelayer.highlight);
+    			info.update(layer.feature.properties);
+			};
+			
+			var info = L.control({
+    			position: 'bottomleft'
+			});
+
+			info.onAdd = function(map) {
+    			this._div = L.DomUtil.create('div', 'info');
+    			this.update();
+    			return this._div;
+			};
+
+			info.update = function(properties) {
+
+				
+				this._div.innerHTML =
+					'<h4>Information</h4>' + (properties ?
+						`
+							Nom de la commune: ${properties.NameFRE}<br>
+							Nom de la province: ${properties.Provinces}<br>
+								` : 'passer au dessus avec votre souris');;
+			};
+
+			info.addTo(map);
+
+			function resetHighlight(e) {
+				var layer = e.target;
+				var feature = e.target.feature;
+				if (checkExistsLayers(feature)) {
+					setStyleLayer(layer, stylelayer.highlight)
+				} else {
+					setStyleLayer(layer, stylelayer.communes)
+				}
+			};
+
+			function checkExistsLayers(feature) {
+				var result = false
+				for (var i = 0; i < featuresSelected.length; i++) {
+					if (featuresSelected[i].NameFRE == feature.properties.NameFRE) {
+						result = true;
+						break;
+					}
+
+				};
+				return result
+			}
+
+			var featuresSelected = [];
+
+			function setStyleLayer(layer, styleSelected) {
+				layer.setStyle(styleSelected)
+			};
+
+			function zoomToFeature(e) {
+				var layer = e.target;
+				var feature = e.target.feature;
+				var layerArea = layer.toGeoJSON();
+
+				// méthode de zoom sur communes
+
+				var coord = [layerArea.geometry.coordinates];
+				var coordS= L.latLngBounds(coord).getSouth();
+				var coordW= L.latLngBounds(coord).getWest();
+				var coordN= L.latLngBounds(coord).getNorth();
+				var coordE= L.latLngBounds(coord).getEast();
+
+				var bbox = [[coordW,coordS],[coordE,coordN]];
+				map.fitBounds(bbox);
+
+				// données de base type/catégorie de la commune
+				// declaration de l'encart d'affichage lors du clic sur un point  
+
+				var info5 = L.control();
+
+				info5.onAdd = function (map) {
+					if(L.DomUtil.get("info5_div")){
+						info5._div = L.DomUtil.get("info5_div"); // Utilisation de la div déjà existante
+					} else {
+	    			    info5._div = L.DomUtil.create('div', 'info5'); // creation d'une balise <div> sous la classe info2
+					}
+					info5.update();
+	    			return info5._div;
+				};
+
+				// methode de mise à jour de l'encart basé sur les features properties
+
+				info5.update = function (feature) {
+
+					//bouton zone d'influence
+
+					let buttonClickable = document.createElement('button');
+					buttonClickable.id = "buttonZoneInfluenceCommunes";
+					buttonClickable.innerText = "Zone d'influence";
+					buttonClickable.title = "information: le bouton permet de calculer la liste de l'ensemble des magasins sur la zone";
+					// buttonClickable.data-toggle = "tooltip";
+					// buttonClickable.data-placement = "left";
+					buttonClickable.onclick = function() { turfCollect5(layerArea); };
+					console.log(buttonClickable.class);
+
+					//bouton indicateur 1
+
+					let btnClicInd1 = document.createElement('button');
+					btnClicInd1.id = "buttonIndicateur1Communes";
+					btnClicInd1.innerText = "Indicateur 001";
+					btnClicInd1.title = "à faire";
+					btnClicInd1.onclick = function() { productionAgriHab(layerArea); };
+
+					// bouton indicateur 2
+
+					let btnClicInd2 = document.createElement('button');
+					btnClicInd2.id = "buttonIndicateur2Communes";
+					btnClicInd2.innerText = "Indicateur 002";
+					btnClicInd2.title = "Indicateur du nombre total de sites sur la commune et du nombre d'habitant par site";
+					btnClicInd2.onclick = function() { densiteComm(layerArea); };
+
+
+					//bouton graphique utilisation du sol
+
+					let btnClicGraph = document.createElement('button');
+					btnClicGraph.id = "buttonGraphiqueCommunes";
+					btnClicGraph.innerText = "Graphique utilisation du sol";
+					btnClicGraph.title = "information: le graphique reprend la part d'utilisation du sol par les terres agricoles et par les terres en friche";
+					btnClicGraph.onclick = function() { pieChart(layerArea); };
+
+					//bouton graphique ressource économique
+
+					let btnClicGraph2 = document.createElement('button');
+					btnClicGraph2.id = "buttonGraphiqueEco";
+					btnClicGraph2.innerText = "Graphique revenu moyen";
+					btnClicGraph2.title = "information: le graphique reprend le revenu moyen par habitant de la commune en comparaison du revenu moyen pour la province et pour la région";
+					btnClicGraph2.onclick = function() { barChart(layerArea); };
+
+
+					// bouton de fermeture
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "btn-close";
+					buttonCloseClickable.onclick = function() { encartClose2(layerArea);};
+
+					this._div.id = "info5_div";
+
+
+	    			this._div.innerHTML = (feature ?
+							`
+								<h4>Commune de ${feature.NameFRE} </h4>
+								<br>
+								<button type="button" class="collapsible">Information générale</button>								
+								<div class="content">
+									<br>
+									<strong> Province :</strong> ${feature.Provinces}<br>
+									<strong> Superficie communale:</strong> ${feature.Surface2} Km <sup>2</sup><br>
+									<strong> Nombre d'habitans:</strong> ${feature.Population} habitants<br>
+									<strong> Densité de population:</strong> ${feature.Densite} habitants par Km <sup>2</sup><br>
+								</div>	
+								<br>
+								<button type="button" class="collapsible">Information économique</button>							
+								<div class="content">
+									<br>
+									<strong> Le revenu moyen par habitant :</strong> ${feature.RevenuMoyenHabitant} euros<br>
+									<strong> Le prix moyen au mètres carré :</strong> ${feature.PrixMoyenm2} euros/m<sup>2</sup><br>
+								</div>	
+								<br>
+								<button type="button" class="collapsible">Information système alimentaire</button>								
+								<div class="content">
+									<br>
+									<strong> Gal présent dans la commune :</strong> ${feature.Gal}<br>
+									<strong> Nombre d'exploitation agricole:</strong> ${feature.NombreExploitations}<br>
+									<strong> Pourcentage de terre arable:</strong> ${feature.PartTerresArables} %<br>
+								</div>	
+								<br>
+
+									` : 'Cliquez sur un point');
+					this._div.appendChild(btnClicGraph);
+					this._div.appendChild(btnClicGraph2);
+					this._div.appendChild(btnClicInd1);
+					this._div.appendChild(btnClicInd2);
+					this._div.appendChild(buttonClickable);
+					this._div.appendChild(buttonCloseClickable);
+					// this._div.appendChild(info5_divHeader);
+
+					var coll = document.getElementsByClassName("collapsible");
+					var i;
+
+					for (i = 0; i < coll.length; i++) {
+					coll[i].addEventListener("click", function() {
+						this.classList.toggle("active");
+						var content = this.nextElementSibling;
+						if (content.style.display === "block") {
+						content.style.display = "none";
+						} else {
+						content.style.display = "block";
+						}
+					});
+					}
+
+				};
+	
+				info5.addTo(map);
+
+				  info5.update(layer.feature.properties)  				
+			};
+
+			function encartClose2 (layer) {
+
+				var closeEncart = document.getElementById("info5_div");
+				console.log(closeEncart);
+				closeEncart.remove();			
+
+			};	
+
+			function productionAgriHab (layer) {
+
+				// Hectares de terres arables sur la commune et %
+				
+				var hectare = layer.properties.SurfTerresArables;
+				var hectare2 = hectare.toFixed(2);
+				var hectarePourcentage = layer.properties.PartTerresArables;
+				var hectarePourcentage2 = hectarePourcentage.toFixed(2);
+
+				// information sur le nombre d'haitants et sur la commune
+
+				var strPopup = layer.properties.Population
+				var communes = layer.properties.Nom
+				var hectareHabitant = hectare2/strPopup
+				var hectareHabitant2 = hectareHabitant.toFixed(2);
+
+				//liste finale des informations reprise dans l'encart
+				var strPopup2 = `<strong> Nombre d'hectares de terres arables: </strong>${hectare2}`
+				var strPopup3 = `<strong> Pourcentage de terres arables: </strong>${hectarePourcentage2} %`
+				var strPopup4 = `Dans la commune de ${communes}, <br> nous retrouvons un total de <strong>${hectare2}</strong> hectares pour <strong> ${strPopup} </strong>habitants`
+				var strPopup5 = `<strong>Nombre d'hectare par habitant</strong> ${hectareHabitant2} hectares`
+
+				var PopuFinal = strPopup2 + '<br>' + strPopup3 + '<br>' + strPopup4 + '<br>' + strPopup5;
+
+					//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+				//récupération de l'encart inof2		
+				var encartBase = L.DomUtil.get("info5_div");
+
+				//bouton pour cacher
+				let buttonHide = document.createElement('button');
+				buttonHide.id = "buttonHide";
+				buttonHide.innerText = "Effacer";
+				buttonHide.onclick = function() { encartHide4(layer); };
+
+				var bufferPointEncart = document.createElement('div');
+				bufferPointEncart.id = "bufferPointEncart";
+				bufferPointEncart.innerHTML = `<h4> Production agricole  </h4>	  
+							${PopuFinal}`;
+
+				encartBase.append(bufferPointEncart);
+				bufferPointEncart.append(buttonHide);
+
+			};
+
+			function densiteComm (layer) {
+
+					//données pour le turf.collect
+
+				// var polygon = layer.toGeoJSON();
+				var polygonFeatureCollection = turf.featureCollection([layer]);
+				var points = pointsGlobal.toGeoJSON();
+
+				//utilisation des fonctions summarize pour les countTurf (nombre total de magasins sur la zone)
+
+				var countNombre = summarizePointsInPolygon (polygonFeatureCollection, points,"countTurf");
+
+				var sumNombre = SummarizeArray(countNombre.features[0].properties.countTurfType);
+				var sumNombreLength = sumNombre[1];
+
+				//rajout des infos Categorie et Type dans 2 variables
+
+				var strPopup =`<strong>Nombre de magasins trouvés sur la zone:</strong> ${sumNombreLength}`
+				
+				// rajout des infos sur la population de la commune
+
+				var commune = layer.properties.Nom
+				var strPopup2 = layer.properties.Population;
+				console.log(strPopup2);
+				var strPopup3 = strPopup2/sumNombreLength;
+				var strPopup4 = strPopup3.toFixed(0);
+				console.log(strPopup4);
+				var strPopup5 = `<strong>Dans la commune de ${commune}, nous retrouvons un magasin pour </strong> ${strPopup4} habitants`
+
+				//liste finale des informations reprise dans l'encart
+
+				var PopuFinal = strPopup + '<br>' + strPopup5 ;
+
+
+					//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+				//récupération de l'encart inof2		
+				var encartBase = L.DomUtil.get("info5_div");
+
+				//bouton pour cacher
+				let buttonHide = document.createElement('button');
+				buttonHide.id = "buttonHide";
+				buttonHide.innerText = "Effacer";
+				buttonHide.onclick = function() { encartHide4(layer); };
+
+				var bufferPointEncart = document.createElement('div');
+				bufferPointEncart.id = "bufferPointEncart";
+				bufferPointEncart.innerHTML = `<h4> Densité du nombre de sites  </h4>	  
+							${PopuFinal}`;
+
+				encartBase.append(bufferPointEncart);
+				bufferPointEncart.append(buttonHide);
+
+			};
+
+			function encartHide4 (layer) {
+
+				var removeEncart = document.getElementById("bufferPointEncart");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+			}	
+
+			function turfCollect5 (layer) {
+
+				//données pour le turf.collect
+
+				// var polygon = layer.toGeoJSON();
+				var polygonFeatureCollection = turf.featureCollection([layer]);
+				var points = pointsGlobal.toGeoJSON();
+
+				//utilisation des fonctions summarize pour les types et catégories
+
+				var countCategorie = summarizePointsInPolygon (polygonFeatureCollection, points,"Categorie");
+				var countType = summarizePointsInPolygon (polygonFeatureCollection, points,"Type");
+
+
+				var sumCategorie = SummarizeArray(countCategorie.features[0].properties.CategorieType);
+				var sumCategorieLength = sumCategorie[0];
+
+				var sumType = SummarizeArray(countType.features[0].properties.TypeType);
+				var sumTypeLength =	sumType[0];
+
+
+				//rajout des infos Categorie et Type dans 2 variables
+
+				var strPopup = "<br> <strong>Résumé de la liste des commerces : </strong>";
+				for (var i=0; i< sumCategorieLength.length;i++) {
+				strPopup += "<br> " +sumCategorie[0][i]+ ": "+sumCategorie[1][i];
+				};
+
+				var strPopup2 = "<br> <strong> Nombre total sur la zone répertorié par cargorie : </strong>";
+				for (var i=0; i< sumTypeLength.length;i++) {
+				strPopup2 += "<br> " +sumType[0][i]+ ": "+sumType[1][i];
+				};
+
+
+				//liste finale des informations reprise dans l'encart
+
+				var PopuFinal = strPopup + "<br>" +strPopup2 ;
+
+
+						//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+				//récupération de l'encart inof2		
+				var encartBase = L.DomUtil.get("info5_div");
+
+				//bouton pour cacher
+				let buttonHide = document.createElement('button');
+				buttonHide.id = "buttonHide";
+				buttonHide.innerText = "Effacer";
+				buttonHide.onclick = function() { encartHide4(layer); };
+
+				var bufferPointEncart = document.createElement('div');
+				bufferPointEncart.id = "bufferPointEncart";
+				bufferPointEncart.innerHTML = `<h4> zone influente </h4>	  
+							${PopuFinal}`;
+
+				encartBase.append(bufferPointEncart);
+				bufferPointEncart.append(buttonHide);
+			};
+
+			function encartHide4 (layer) {
+
+				var removeEncart = document.getElementById("bufferPointEncart");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+			}	
+			
+			function pieChart (feature) {
+
+				var info6 = L.control();
+
+				info6.onAdd = function (map) {
+						if(L.DomUtil.get("info6_div")){
+							info6._div = L.DomUtil.get("info6_div"); // Utilisation de la div déjà existante
+						} else {
+							info6._div = L.DomUtil.create('div', 'info6'); // creation d'une balise <div> sous la classe info2
+						}							
+						info6.update();
+						return info6._div;
+					};
+				// methode utilisée pour updater l'encart controle basé sur les features properties
+
+				info6.update = function (feature) {
+
+					//bouton de fermeture
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "close";
+					buttonCloseClickable.onclick = function(){ encartHide2(info6); };
+
+					// création d'un élément canvas
+
+					let chartCanvas = document.createElement('canvas');
+					chartCanvas.id = "chartTest";
+					chartCanvas.style.cssText = 'width:350px;height:350px';
+
+					//dans l'encart
+
+					this._div.innerHTML = `	`;
+					this._div.id = "info6_div";
+					this._div.appendChild(buttonCloseClickable);
+					this._div.appendChild(chartCanvas);
+				};
+
+				info6.addTo(map);
+
+				// //append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+				// //récupération de l'encart info5		
+				// var encartBase = L.DomUtil.get("info5_div");
+
+				// //bouton pour cacher
+				// let buttonHide = document.createElement('button');
+				// buttonHide.id = "buttonHide";
+				// buttonHide.innerText = "Effacer";
+				// buttonHide.onclick = function() { encartHide2(layer); };
+
+				// // création d'un élément canvas
+
+				// let chartCanvas = document.createElement('canvas');
+				// chartCanvas.id = "chartTest";
+				// chartCanvas.innertetx = `<h4> zone influente </h4>	  
+				// 				 ${chart1}`;
+				// chartCanvas.style.cssText = 'width:300px;height:300px';
+
+				// var pieCharttEncart = document.createElement('div');
+				// pieCharttEncart.id = "bufferPointEncart";
+				// pieCharttEncart.innerHTML = `<h4> Graphique </h4>	  
+				// 		`;
+
+				// encartBase.append(pieCharttEncart);
+				// pieCharttEncart.append(chartCanvas);
+				// pieCharttEncart.append(buttonHide);
+
+
+				//création des variables du pie chart
+
+				var surfaceAgricole = feature.properties.SurfAgri2;
+				console.log(surfaceAgricole);
+
+				var surfaceFriche = feature.properties.SurfFriche2;
+				console.log(surfaceFriche);
+
+				var surfaceCommune = feature.properties.Surface2;
+				console.log(surfaceCommune);
+
+				var surfaceCommuneResiduel = surfaceCommune - surfaceFriche - surfaceAgricole
+				console.log(surfaceCommuneResiduel);
+
+				let label = ['terres agricoles', 'terres en friche', 'Autres'];
+				let data = [surfaceAgricole,surfaceFriche,surfaceCommuneResiduel]
+
+				let color = ['#8A2BE2','#36CAAB','#49A9EA'];
+
+				let myChart = document.getElementById("chartTest");
+
+				let chart1 = new Chart(myChart, {
+					type: 'pie',
+					data: {
+						labels: label,
+						datasets: [{
+							data: data,
+							backgroundColor: color
+						}],
+					},
+					options: {
+						title: {
+							text: "Graphique d'utilisation du sol (en km2)",
+							display: 'true',
+						},
+					},
+				});
+	
+			};
+			
+			function encartHide2 (layer) {
+
+				var removeEncart = document.getElementById("info6_div");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+			}
+
+			function barChart (feature) {
+
+				var info8 = L.control();
+
+				info8.onAdd = function (map) {
+						if(L.DomUtil.get("info8_div")){
+							info8._div = L.DomUtil.get("info8_div"); // Utilisation de la div déjà existante
+						} else {
+							info8._div = L.DomUtil.create('div', 'info8'); // creation d'une balise <div> sous la classe info2
+						}							
+						info8.update();
+						return info8._div;
+					};
+
+				// methode utilisée pour updater l'encart controle basé sur les features properties
+
+				info8.update = function (feature) {
+
+					//bouton de fermeture
+
+					let buttonCloseClickable = document.createElement('button');
+					buttonCloseClickable.id = "buttonX";
+					buttonCloseClickable.innerText = "X";
+					buttonCloseClickable.class = "close";
+					buttonCloseClickable.onclick = function(){ encartHide3(info8); };
+
+					// création d'un élément canvas
+
+					let chartCanvas2 = document.createElement('canvas');
+					chartCanvas2.id = "chartTest2";
+					chartCanvas2.style.cssText = 'width:350px;height:350px';
+
+					//dans l'encart
+
+					this._div.innerHTML = `	`;
+					this._div.id = "info8_div";
+					this._div.appendChild(buttonCloseClickable);
+					this._div.appendChild(chartCanvas2);
+				};
+
+				info8.addTo(map);
+
+				//création des variables du bar chart
+
+				var revenuCommune = feature.properties.RevenuMoyenHabitant;
+				console.log(revenuCommune);
+
+				var revenuProvince = feature.properties.RevenuProvince;
+				console.log(revenuProvince);
+
+				var revenuWallon = feature.properties.RevenuWallon;
+				console.log(revenuWallon);				
+
+				let label2 = ['Commune', 'Province', 'Region Wallone'];
+				let data2 = [revenuCommune,revenuProvince,revenuWallon];
+				let legend2 = ['Commune', 'Province', 'Region Wallone']
+
+				let color2 = ['#B370CF','#34495E','#49A9EA'];
+
+				let myChart2 = document.getElementById("chartTest2");
+
+				let chart2 = new Chart(myChart2, {
+					type: 'bar',
+					data: {
+						labels: label2,
+						datasets: [{
+							data: data2,
+							backgroundColor: color2
+						}],
+					},
+					options: {
+						title: {
+							text: "Graphique du revenu moyen par habitant (en euros)",
+							display: 'true',
+						},
+						legend: {
+							display : false,
+						 }
+					},
+				});
+
+				};
+
+				function encartHide3 (layer) {
+
+				var removeEncart = document.getElementById("info8_div");
+				console.log(removeEncart);
+				removeEncart.remove();			
+
+				}	
+
+			//création de la boite de controle des couches									
+
+			var baseMaps = [
+				{
+					active: true,
+					name: "Carte de base OSM",
+					layer: streets
+				}
+			];
+
+			var overlayMaps = [
+				{
+					group:"Limites administratives",
+					layers: [
+						{
+							name: "Communes",
+							layer:communes_ctrl
+						},
+						{
+							name:"Provinces",
+							layer:provinces_ctrl
+						}
+					]
+				},{
+					group:"Système alimentaire",
+					layers: [
+						{
+							name:"Offre actuelle",
+							layer:sitesRepertoriesCtrl
+						},
+
+					]
+				}
+				// ,{
+				// 	group:"Sélection",
+				// 	layers: []
+				// }
+			];
+			
+			var control_map = L.control.panelLayers(baseMaps,overlayMaps,{position:'topleft', collapsed: false, hideSingleBase:true}).addTo(map);
+
+			//création de la boite de controle de la géolocalisation
+
+			lc = L.control.locate({
+				position:'topleft',
+			    strings: {
+			        title: "Géolocalisation de l'utilisateur"
+			    }
+			}).addTo(map);
+
+			// création de la boite de contrôle du geocoding
+
+			L.Control.geocoder({
+				position:'topleft',
+				strings: {
+					title: "Trouvez une adresse"
+				}
+
+			}).addTo(map);
+
+
+
+			    // Create the marker controls
+		    // var marker_controls = new L.Control.SimpleMarkers();
+		    // map.addControl(marker_controls);
+
+		    // Create draw polygons
+
+			var editableLayers = new L.FeatureGroup();
+			map.addLayer(editableLayers);
+
+			var drawPluginOptions = {
+			  position: 'topleft',
+			  draw: {
+			    polygon: {
+			      allowIntersection: false, // Restricts shapes to simple polygons
+			      drawError: {
+			        color: '#e1e100', // Color the shape will turn when intersects
+			        message: '<strong>Attention<strong> Vous ne pouvez pas dessiner cela!' // Message that will show when intersect
+			      },
+			      shapeOptions: {
+			        color: '#97009c'
+			      }
+			    },
+			    // disable toolbar item by setting it to false
+			    polyline: false,
+			    circle: false, // Turns off this drawing tool
+			    rectangle: false,
+			    marker: true,
+			    },
+			  edit: {
+			    featureGroup: editableLayers, //REQUIRED!!
+			    remove: true
+			  },
+			};
+
+
+
+			// Initialise the draw control and pass it the FeatureGroup of editable layers
+			var drawControl = new L.Control.Draw(drawPluginOptions);
+			map.addControl(drawControl);
+
+			// var editableLayers = new L.FeatureGroup();
+			// map.addLayer(editableLayers);
+
+			map.on('draw:created', function(e) {
+				var type = e.layerType;
+				var layer = e.layer;
+				var layerPoints = layer.toGeoJSON();
+				var layerArea = layer.toGeoJSON();
+
+
+				switch (type) {
+
+					case 'marker':
+
+							//nom du point crée
+
+						var pointCreatedName1 = prompt("Nommez le point que vous venez de créez");
+						var pointCreatedName2 = "<strong> Nom de la zone crée : </strong>"; 
+						var areaCreatedNameFull = pointCreatedName2 +pointCreatedName1+ "<br>";
+
+						var info4 = L.control();
+
+						info4.onAdd = function (map) {
+							if (L.DomUtil.get("info4_div")){
+								info4._div = L.DomUtil.get("info4_div"); // Utilisation de la div déjà existante
+							} else {
+								info4._div = L.DomUtil.create('div', 'info4'); // creation d'une balise <div> sous la classe info2
+							}
+							info4.update();							
+
+			    			return info4._div;
+						};
+						
+
+						// methode utilisée pour updater l'encart controle basé sur les features properties
+				
+
+						info4.update = function (feature) {
+							// Button - Zone d'influence 
+							let buttonClickable = document.createElement('button');
+							buttonClickable.id = Math.random().toString(36).substring(7);
+							buttonClickable.innerText = "Zone d'influence";
+							buttonClickable.onclick = function() { bufferPoint4(layerPoints); };
+
+							// Button - Close
+							// let buttonCloseClickable = document.createElement('button');
+							// buttonCloseClickable.id = Math.random().toString(36).substring(7);
+							// buttonCloseClickable.innerText = "X";
+							// buttonCloseClickable.class = "close";
+							// buttonCloseClickable.onclick = function(e) { 
+							// 	e.preventDefault();
+							//     this.parentNode.style.display = 'none'; 
+						    // };
+
+							this._div.innerHTML = `<br/>  ${areaCreatedNameFull}  <br/>`;
+							this._div.id = "info4_div";
+							// this._div.appendChild(buttonCloseClickable);
+							this._div.appendChild(buttonClickable);
+						};
+						
+
+						info4.addTo(map);
+
+						editableLayers.addLayer(layer);
+						break;
+
+					case 'polygon':
+
+							//Nom de la zone créee
+
+						var areaCreatedName1 = prompt("Nommez la zone que vous venez de créer");
+						var areaCreatedName2 = "<strong> Nom de la zone crée : </strong>"; 
+						var areaCreatedNameFull = areaCreatedName2 +areaCreatedName1+ "<br>";
+
+
+						  //calcul de l'aire de la zone créee
+
+						var areaPolygon =  turf.area(layer.toGeoJSON());
+						var areaPolygonKm = Number(areaPolygon*0.000001);
+						var n = areaPolygonKm.toFixed(2);
+						var areaWritting ="<br> <strong>Aire de la zone :</strong> " +n+ " Km<sup>2</sup>";
+
+							//création d'une zone d'info pour la création du polygone
+
+						var info3 = L.control();
+
+						info3.onAdd = function (map) {
+			    			info3._div = L.DomUtil.create('div', 'info3'); // creation d'un <di>
+			    			info3.update();
+			    			return info3._div;
+						};
+
+						// methode utilisée pour updater l'encart controle basé sur les features properties
+
+						info3.update = function (feature) {
+
+							//bouton de fermeture
+
+							let buttonCloseClickable = document.createElement('button');
+							buttonCloseClickable.id = "buttonX";
+							buttonCloseClickable.innerText = "X";
+							buttonCloseClickable.class = "close";
+							buttonCloseClickable.onclick = function() { encartClose3(layerArea); };
+
+							//bouton de zone d'influence
+
+							let btnZoneInflRec = document.createElement('button');
+							btnZoneInflRec.id = "btnZoneInflRec";
+							btnZoneInflRec.innerText = "Zone d'influence";
+							btnZoneInflRec.onclick = function() { turfCollect3(layerArea); };
+
+
+							//bouton de densité et revenu
+
+							let btnDensRevRec = document.createElement('button');
+							btnDensRevRec.id = "btnDensRevRec";
+							btnDensRevRec.innerText = "Information supplémentaire";
+							btnDensRevRec.onclick = function() { turfCollectSS(layerArea); };
+
+							//bouton indicateur 001
+							let btnInd1Rec = document.createElement('button');
+							btnInd1Rec.id = "btnInd1Rec";
+							btnInd1Rec.innerText = "Indicateur 001";
+							btnInd1Rec.onclick = function() { productionAgriHabRec(layerArea); };
+
+							//bouton indicateur 002
+							let btnInd2Rec = document.createElement('button');
+							btnInd2Rec.id = "btnInd2Rec";
+							btnInd2Rec.innerText = "Indicateur 002";
+							btnInd2Rec.onclick = function() { densiteComRec(layerArea); };
+
+
+							this._div.id = "info3_div";
+
+							this._div.innerHTML = `
+								<h4> Nom de la zone crée ${areaCreatedName1} </h4>
+								<strong> Aire de la zone : </strong> ${n} km <sup>2</sup> <br>
+								<br>
+									` 
+							this._div.appendChild(buttonCloseClickable);
+							this._div.appendChild(btnDensRevRec);
+							this._div.appendChild(btnZoneInflRec);
+							this._div.appendChild(btnInd1Rec);
+							this._div.appendChild(btnInd2Rec);
+						};
+
+						info3.addTo(map);
+																			
+
+						editableLayers.addLayer(layer);
+						break;
+				};
+
+				});
+
+				function encartClose3 (layer) {
+
+					var closeEncart = document.getElementById("info3_div");
+					console.log(closeEncart);
+					closeEncart.remove();			
+
+				};	
+
+				function turfCollectSS (layer) {
+
+					// rectangle de construction
+					var polygonFeatureCollection = turf.featureCollection([layer]);
+
+					//données secteur stat					
+					var points = secteurStat_geojson.toGeoJSON();
+
+					//summarize population
+					var countPopulation = summarizePointsInPolygon (polygonFeatureCollection, points,"POPULATION");
+					console.log(countPopulation);
+
+					var sumPopulation = SummarizeArray(countPopulation.features[0].properties.POPULATIONType);
+					var sumPopulationLength = sumPopulation[0];
+					console.log(sumPopulation);
+					console.log(sumPopulationLength);
+
+					var poptotal = 0;
+					for (var i = 0; i < sumPopulationLength.length; i++) {	
+						poptotal += sumPopulationLength[i] };
+
+					//summarize salaires
+					var countSalaire = summarizePointsInPolygon (polygonFeatureCollection, points,"MS_AVG_TOT_NET_TAXABLE_INC");
+					console.log(countSalaire);
+
+					var sumSalaire = SummarizeArray(countSalaire.features[0].properties.MS_AVG_TOT_NET_TAXABLE_INCType);
+					var sumSalaireLength = sumSalaire[0];
+					console.log(sumSalaire);
+					console.log(sumSalaireLength);
+
+					var saltot = 0;
+					for (var i = 0; i < sumSalaireLength.length; i++) {	
+						saltot += sumSalaireLength[i] };
+
+					var salmoy = saltot / sumSalaireLength.length;
+					var salmoyRound = salmoy.toFixed(0);
+
+					// summarize Provinces touchées
+					var countProvinces = summarizePointsInPolygon (polygonFeatureCollection, points,"TX_PROV_DESCR_FR");
+
+					var sumProvinces = SummarizeArray(countProvinces.features[0].properties.TX_PROV_DESCR_FRType);
+					var sumProvincesLength = sumProvinces[0];
+
+					// summarize Communes touchées
+					var countCommunes = summarizePointsInPolygon (polygonFeatureCollection, points,"TX_MUNTY_DESCR_FR");
+
+					var sumCommunes = SummarizeArray(countCommunes.features[0].properties.TX_MUNTY_DESCR_FRType);
+					var sumCommunesLength = sumCommunes[0];
+
+
+						//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+					//récupération de l'encart inof2		
+					var encartBase = L.DomUtil.get("info3_div");
+
+					//bouton pour cacher
+					let buttonHide = document.createElement('button');
+					buttonHide.id = "buttonHide";
+					buttonHide.innerText = "Effacer";
+					buttonHide.onclick = function() { encartHide5(layer); };
+
+					var bufferPointEncart = document.createElement('div');
+					bufferPointEncart.id = "bufferPointEncart";
+					bufferPointEncart.innerHTML = `<h4> Densité et revenu </h4>
+								<strong> Liste des communes dans la zone </strong> ${sumCommunesLength} <br>
+								<strong> Liste des provinces dans la zone </strong> ${sumProvincesLength} <br>
+								<strong> Estimation du nombre d'habitant: </strong> ${poptotal} habitants<br>
+								<strong> Estimation du revenu moyen par habitant: </strong> ${salmoyRound} euros<br>	  
+								`;
+
+					encartBase.append(bufferPointEncart);
+					bufferPointEncart.append(buttonHide);
+
+				};
+
+				function encartHide5 (layer) {
+
+					var removeEncart = document.getElementById("bufferPointEncart");
+					console.log(removeEncart);
+					removeEncart.remove();			
+
+				};
+
+				function turfCollect3 (layer) {
+
+					//données pour le turf.collect
+
+					// var polygon = layer.toGeoJSON();
+					var polygonFeatureCollection = turf.featureCollection([layer]);
+					var points = pointsGlobal.toGeoJSON();
+
+					//utilisation des fonctions summarize pour les types et catégories
+
+					var countCategorie = summarizePointsInPolygon (polygonFeatureCollection, points,"Categorie");
+					var countType = summarizePointsInPolygon (polygonFeatureCollection, points,"Type");
+
+
+					var sumCategorie = SummarizeArray(countCategorie.features[0].properties.CategorieType);
+					var sumCategorieLength = sumCategorie[0];
+
+					var sumType = SummarizeArray(countType.features[0].properties.TypeType);
+					var sumTypeLength =	sumType[0];
+
+
+					//rajout des infos Categorie et Type dans 2 variables
+
+					var strPopup = "<br> <strong>Résumé de la liste des commerces :  </strong>";
+					for (var i=0; i< sumCategorieLength.length;i++) {
+					strPopup += "<br> " +sumCategorie[0][i]+ ": "+sumCategorie[1][i];
+					};
+
+					var strPopup2 = "<br> <strong> Nombre total sur la zone répertorié par cargorie : </strong>";
+					for (var i=0; i< sumTypeLength.length;i++) {
+					strPopup2 += "<br> " +sumType[0][i]+ ": "+sumType[1][i];
+					};
+
+					//liste finale des informations reprise dans l'encart
+
+					var PopuFinal = strPopup + "<br>" +strPopup2;
+
+
+						//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+					//récupération de l'encart inof2		
+					var encartBase = L.DomUtil.get("info3_div");
+
+					//bouton pour cacher
+					let buttonHide = document.createElement('button');
+					buttonHide.id = "buttonHide";
+					buttonHide.innerText = "Effacer";
+					buttonHide.onclick = function() { encartHide5(layer); };
+
+					var bufferPointEncart = document.createElement('div');
+					bufferPointEncart.id = "bufferPointEncart";
+					bufferPointEncart.innerHTML = `<h4> zone influente </h4>	  
+							${PopuFinal}`;
+
+					encartBase.append(bufferPointEncart);
+					bufferPointEncart.append(buttonHide);
+
+				};
+
+				function productionAgriHabRec (layer) {
+					alert ('en construction');
+				};
+
+				function densiteComRec (layer) {
+					alert ('en construction');
+				};
+
+						
+				
+				function summarizePointsInPolygon (polygon,points,prop) {
+					collectPoints = turf.collect(polygon, points, prop,prop+"Type");
+					return collectPoints;
+				};
+
+				function SummarizeArray (ar) {
+					var arUnique = [];
+					var arCount = [];
+					for (var i = 0; i < ar.length; i++) {
+						var idx = arUnique.indexOf(ar[i]);
+						if (idx < 0) {
+							arUnique.push(ar[i]);
+							arCount.push(1);
+						} else {
+							arCount [idx] = arCount[idx]+1;
+						}
+					}
+					return[arUnique,arCount];
+				};
+	 		
+
+				function bufferPoint2 (layer) {
+
+						//création du buffer
+						
+						var distance = prompt('Buffer distance :');
+						var jsnConsoBuffer = turf.buffer(layer, distance,{units: 'kilometers'});
+
+						var test1 = document.getElementById ("_leaflet_id:")
+
+						var lyrConsoBuffer = L.geoJson(jsnConsoBuffer, {style:{color:'red'}}).addTo(map);
+						console.log(lyrConsoBuffer)
+
+						// if (typeof lyrConsonBufferJson == 'object') {
+						// 	alert ('DEDANS');
+						// } else {
+						// 	alert ('non peut etre')
+						// }
+						// var test1 = (typeof lyrConsonBufferJson);
+						// console.log(test1);
+						
+						var lyrConsonBufferJson = lyrConsoBuffer.toGeoJSON();
+						lyrConsonBufferJson.id= "lyrConsoBufferId"
+
+
+						//transformation en feature pour préparation au fitBounds
+
+						var LyrConsoBufferFeature = turf.feature(jsnConsoBuffer);
+
+						// méthode de zoom sur Buffer
+
+						var coord = [LyrConsoBufferFeature.geometry.geometry.coordinates];
+						var coordS= L.latLngBounds(coord).getSouth();
+						var coordW= L.latLngBounds(coord).getWest();
+						var coordN= L.latLngBounds(coord).getNorth();
+						var coordE= L.latLngBounds(coord).getEast();
+
+						var bbox = [[coordW,coordS],[coordE,coordN]];
+						map.fitBounds(bbox);
+
+						//sélection des infos vie méthode turf
+						var points = pointsGlobal.toGeoJSON();
+
+						var countCategorie = summarizePointsInPolygon (lyrConsonBufferJson, points,"Categorie");
+						var countType = summarizePointsInPolygon (lyrConsonBufferJson, points,"Type");
+
+
+						var sumCategorie = SummarizeArray(countCategorie.features[0].properties.CategorieType);
+						var sumCategorieLength = sumCategorie[0];
+
+
+						var sumType = SummarizeArray(countType.features[0].properties.TypeType);
+						var sumTypeLength =	sumType[0];
+
+							//rajout des infos Categorie et Type dans 2 variables
+
+						var strPopup = "<br> <strong>Liste et nombre de commerces : </strong>";
+						for (var i=0; i< sumCategorieLength.length;i++) {
+							strPopup += "<br> " +sumCategorie[0][i]+ ": "+sumCategorie[1][i];
+						};
+
+
+						var strPopup2 = "<br> <strong> Nombre total sur la zone : </strong>";
+						for (var i=0; i< sumTypeLength.length;i++) {
+							strPopup2 += "<br> " +sumType[0][i]+ ": "+sumType[1][i];
+							var sumTotalType = sumType[1][i];
+						};
+
+							
+						//calcul de l'aire de la zone créee
+
+						var areaPolygon =  turf.area(lyrConsonBufferJson);
+						var areaPolygonKm = Number(areaPolygon*0.000001);
+						var n = areaPolygonKm.toFixed(2);
+						var areaWritting ="<br> <strong>Aire de la zone :</strong> " +n+ " Km<sup>2</sup>";
+
+						  //nombre de commerce par km2
+
+						var areaConso = sumTypeLength.length/n;
+						var n2 = areaConso.toFixed(2);
+						var areaWritting2 ="<br> <strong>1 commerce par :</strong> " +n2+ " Km<sup>2</sup>";		
+
+						var PopuFinal =  strPopup + "<br>" +strPopup2 + areaWritting +areaWritting2 ;
+
+						
+								//append de l'encart info des points avec les resultats de la méthode bufferPoint2
+						
+						//récupération de l'encart inof2		
+						var encartBase = L.DomUtil.get("info2_div");
+
+						//bouton pour cacher
+						let buttonHide = document.createElement('button');
+						buttonHide.id = "buttonHide";
+						buttonHide.innerText = "Effacer";
+						buttonHide.onclick = function() { encartHide(layer); };
+
+						var bufferPointEncart = document.createElement('div');
+						bufferPointEncart.id = "bufferPointEncart";
+						bufferPointEncart.innerHTML = `<h4> zone influente </h4>	  
+								 ${PopuFinal}`;
+
+						encartBase.append(bufferPointEncart);
+						bufferPointEncart.append(buttonHide);
+
+					};
+				function encartHide (layer) {
+
+					var removeEncart = document.getElementById("bufferPointEncart");
+					console.log(removeEncart);
+					removeEncart.remove();			
+			
+				}	
+
+				function bufferPoint4 (layer) {
+
+					//création du buffer
+					var distance = prompt('Buffer distance :');
+					var jsnConsoBuffer = turf.buffer(layer, distance,{units: 'kilometers'});
+					var lyrConsoBuffer = L.geoJson(jsnConsoBuffer, {style:{color:'red'}}).addTo(map);
+					var lyrConsonBufferJson = lyrConsoBuffer.toGeoJSON();
+
+
+					//sélection des infos vie méthode turf
+					var points = pointsGlobal.toGeoJSON();
+
+
+					var countCategorie = summarizePointsInPolygon (lyrConsonBufferJson, points,"Categorie");
+					var countType = summarizePointsInPolygon (lyrConsonBufferJson, points,"Type");
+
+
+					var sumCategorie = SummarizeArray(countCategorie.features[0].properties.CategorieType);
+					var sumCategorieLength = sumCategorie[0];
+
+
+					var sumType = SummarizeArray(countType.features[0].properties.TypeType);
+					var sumTypeLength =	sumType[0];
+
+						//rajout des infos Categorie et Type dans 2 variables
+
+					var strPopup = "<br> <strong>Liste et nombre de commerces : </strong>";
+					for (var i=0; i< sumCategorieLength.length;i++) {
+						strPopup += "<br> " +sumCategorie[0][i]+ ": "+sumCategorie[1][i];
+					};
+
+					var strPopup2 = "<br> <strong> Nombre total sur la zone : </strong>";
+					for (var i=0; i< sumTypeLength.length;i++) {
+						strPopup2 += "<br> " +sumType[0][i]+ ": "+sumType[1][i];
+						var sumTotalType = sumType[1][i];
+					};
+						
+					//calcul de l'aire de la zone créee
+
+					var areaPolygon =  turf.area(lyrConsonBufferJson);
+					var areaPolygonKm = Number(areaPolygon*0.000001);
+					var n = areaPolygonKm.toFixed(2);
+					var areaWritting ="<br> <strong>Aire de la zone :</strong> " +n+ " Km<sup>2</sup>";
+
+					//nombre de commerce par km2
+
+					var areaConso = sumTypeLength.length/n;
+					var n2 = areaConso.toFixed(2);
+					var areaWritting2 ="<br> <strong>1 commerce par :</strong> " +n2+ " Km<sup>2</sup>";		
+
+					var PopuFinal =  strPopup + "<br>" +strPopup2 + areaWritting +areaWritting2;
+
+
+							//création d'une zone d'info pour la création du polygone
+
+					var info4 = L.control();
+
+					info4.onAdd = function (map) {
+						if(L.DomUtil.get("info4_div")){
+							info4._div = L.DomUtil.get("info4_div"); // Utilisation de la div déjà existante
+						} else {
+							info4._div = L.DomUtil.create('div', 'info4'); // creation d'une balise <div> sous la classe info2
+						}							
+						info4.update();
+						return info4._div;
+					};
+
+					// methode utilisée pour updater l'encart controle basé sur les features properties
+
+					info4.update = function (feature) {
+						this._div.ParentNode.append() = `${PopuFinal}`;
+						this._div.id = "info4_div";
+					};
+
+					info4.addTo(map);					
+
+				};										
+			
+			</script>
+		</div>
+
+<!-- 		<div id="outils">
+
+				<div class="outils_01">
+					<h1> Outil de création de rapport</h1>
+				</div>
+
+				<div class="outils_02">
+					<h1> Outil de sélection</h1>
+				</div>
+			
+				<div class="outils_03">
+					<h1> Indice alimentaire</h1>
+				</div>
+
+				<div class="outils_04">
+					<h1> Outil de mesures</h1>
+				</div>			
+
+		</div>		 -->
+
+		<div class="pied_principal">
+			<h1> Pied de page</h1>
+		</div>
+
+	</body>
+</html>
